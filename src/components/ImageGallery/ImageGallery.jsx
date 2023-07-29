@@ -1,12 +1,12 @@
 import { GalleryWrap } from './ImageGallery.styled';
 import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
 
-export const ImageGallery = ({ gallery, openModal, modalUrl }) => {
+export const ImageGallery = ({ images, openModal, modalUrl }) => {
   return (
     <GalleryWrap>
-      {gallery.map(image => (
+      {images.map(image => (
         <ImageGalleryItem
-          key={image.id}
+          key={image.webformatURL}
           image={image}
           openModal={openModal}
           getModalUrl={modalUrl}

@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlobalStyles } from 'components/GlobalStyle';
 import { Layout } from './App.styled';
 import {
@@ -13,31 +13,24 @@ import {
 import Notiflix from 'notiflix';
 import * as Api from '../services/pixabay-api';
 
-export class App extends Component {
-  state = {
-    inputValue: '',
-    gallery: [],
-    page: 1,
-    perPage: 12,
-    showModal: false,
-    modalUrl: '',
-    loading: false,
-  };
+export const App = () => {
+  const [inputValue, setInputValue] = useState('');
+  const [gallery, setGallery] = useState([]);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(12);
+  const [showModal, setShowModal] = useState(false);
+  const [modalUrl, setModalUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { inputValue, page, perPage } = this.state;
+  useEffect(() => {
+    if (!inputValue) return;
+    setLoading(true);
+    getPictures(inputValue, page, perPage);
 
-    if (
-      prevState.inputValue !== inputValue ||
-      (prevState.page !== page && page > 1)
-    ) {
-      this.setState({ isLoading: true });
-      this.getPictures(inputValue, page, perPage);
-    }
     window.scrollBy(0, window.innerHeight);
-  }
+  }, [inputValue, page, perPage]);
 
-  getPictures = async (query, page, perPage) => {
+  const getPictures = async (query, page, perPage) => {
     try {
       const images = await Api.fetchGallery(query, page, perPage);
       if (!images.length) {
@@ -45,68 +38,59 @@ export class App extends Component {
           `Sorry, there are no images matching your search query "${query}". Please try again.`
         );
       }
-      this.setState(prev => ({
-        gallery: [...prev.gallery, ...images],
-      }));
+      setGallery(prevGallery => [...prevGallery, ...images]);
     } catch (error) {
       console.log('error');
     } finally {
-      this.setState({ isLoading: false });
+      setLoading(false);
     }
   };
 
-  handleSearch = searchInput => {
-    const { inputValue } = this.state;
+  const handleSearch = searchInput => {
     if (inputValue === searchInput) {
       Notiflix.Notify.info(
         `Your request "${searchInput}" has already been completed! :-)`
       );
       return;
     }
-    this.setState({ gallery: [], inputValue: searchInput, page: 1 });
-    this.getPictures(searchInput, 1, this.state.perPage);
+    setGallery([]);
+    setInputValue(searchInput);
+    setPage(1);
+    getPictures(searchInput, 1, perPage);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const toggleModal = () => {
+    setShowModal(prevShowModal => !prevShowModal);
   };
 
-  handleModalOpen = url => {
-    this.setState({ modalUrl: url });
+  const handleModalOpen = url => {
+    setModalUrl(url);
   };
 
-  render() {
-    const { gallery, showModal, loading, modalUrl, perPage } = this.state;
-
-    const { handleSearch, toggleModal, handleModalOpen, handleLoadMore } = this;
-
-    return (
-      <Layout>
-        <ErrorBoundary fallback="Sorry something went wrong ">
-          <GlobalStyles />
-          {showModal && (
-            <Modal modalImg={modalUrl} onClose={toggleModal}>
-              <img src={modalUrl} alt={gallery.tags} />
-            </Modal>
-          )}
-          <Searchbar handleSearch={handleSearch} />
-          <ImageGallery
-            gallery={gallery}
-            openModal={toggleModal}
-            modalUrl={handleModalOpen}
-          />
-          {loading && <Loader />}
-          {gallery.length >= perPage && !loading && (
-            <Button loadMore={handleLoadMore} />
-          )}
-        </ErrorBoundary>
-      </Layout>
-    );
-  }
-}
+  return (
+    <Layout>
+      <ErrorBoundary fallback="Sorry something went wrong ">
+        <GlobalStyles />
+        {showModal && (
+          <Modal modalImg={modalUrl} onClose={toggleModal}>
+            <img src={modalUrl} alt={gallery.tags} />
+          </Modal>
+        )}
+        <Searchbar handleSearch={handleSearch} />
+        <ImageGallery
+          images={gallery}
+          openModal={toggleModal}
+          modalUrl={handleModalOpen}
+        />
+        {loading && <Loader />}
+        {gallery.length >= perPage && !loading && (
+          <Button loadMore={handleLoadMore} />
+        )}
+      </ErrorBoundary>
+    </Layout>
+  );
+};
