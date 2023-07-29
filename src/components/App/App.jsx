@@ -46,6 +46,25 @@ export const App = () => {
     }
   };
 
+  //  infinite scroll
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight
+      ) {
+        handleLoadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const handleSearch = searchInput => {
     if (inputValue === searchInput) {
       Notiflix.Notify.info(
