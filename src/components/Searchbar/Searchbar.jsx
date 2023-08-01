@@ -18,7 +18,6 @@ const validationSchema = Yup.object().shape({
 export const Searchbar = ({ handleSearch }) => {
   const handleSubmit = ({ searchInput }, { resetForm }) => {
     handleSearch(searchInput);
-    console.log(handleSearch);
     resetForm();
   };
 

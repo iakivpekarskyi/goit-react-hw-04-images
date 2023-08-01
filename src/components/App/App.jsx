@@ -18,25 +18,26 @@ export const App = () => {
   const [gallery, setGallery] = useState([]);
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
-  const [showModal, setShowModal] = useState(false);
   const [modalUrl, setModalUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!inputValue) return;
-    setLoading(true);
+
     getPictures(inputValue, page, perPage);
 
     window.scrollBy(0, window.innerHeight);
   }, [inputValue, page, perPage]);
 
   const getPictures = async (query, page, perPage) => {
+    setLoading(true);
     try {
       const images = await Api.fetchGallery(query, page, perPage);
       if (!images.length) {
         Notiflix.Notify.failure(
           `Sorry, there are no images matching your search query "${query}". Please try again.`
         );
+        return;
       }
       setGallery(prevGallery => [...prevGallery, ...images]);
     } catch (error) {
@@ -45,25 +46,6 @@ export const App = () => {
       setLoading(false);
     }
   };
-
-  //  infinite scroll
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight
-      ) {
-        handleLoadMore();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   const handleSearch = searchInput => {
     if (inputValue === searchInput) {
@@ -75,18 +57,13 @@ export const App = () => {
     setGallery([]);
     setInputValue(searchInput);
     setPage(1);
-    getPictures(searchInput, 1, perPage);
   };
 
   const handleLoadMore = () => {
     setPage(prevPage => prevPage + 1);
   };
 
-  const toggleModal = () => {
-    setShowModal(prevShowModal => !prevShowModal);
-  };
-
-  const handleModalOpen = url => {
+  const toggleModal = (url = '') => {
     setModalUrl(url);
   };
 
@@ -94,20 +71,16 @@ export const App = () => {
     <Layout>
       <ErrorBoundary fallback="Sorry something went wrong ">
         <GlobalStyles />
-        {showModal && (
-          <Modal modalImg={modalUrl} onClose={toggleModal}>
-            <img src={modalUrl} alt={gallery.tags} />
-          </Modal>
-        )}
         <Searchbar handleSearch={handleSearch} />
-        <ImageGallery
-          images={gallery}
-          openModal={toggleModal}
-          modalUrl={handleModalOpen}
-        />
+        <ImageGallery images={gallery} openModal={toggleModal} />
         {loading && <Loader />}
         {gallery.length >= perPage && !loading && (
           <Button loadMore={handleLoadMore} />
+        )}
+        {modalUrl && (
+          <Modal modalImg={modalUrl} onClose={toggleModal}>
+            <img src={modalUrl} alt={gallery.tags} />
+          </Modal>
         )}
       </ErrorBoundary>
     </Layout>
